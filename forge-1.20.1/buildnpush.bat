@@ -1,0 +1,1 @@
+.\gradlew :forge-1.20.1:build && scp -i "C:\Users\danyl\OneDrive\Desktop\uf_connect\key" "forge-1.20.1\build\libs\forge-1.20.1-0.1.0.jar" "root@unrealfrontiers.xyz:~/unrealfrontiers/gameservers/all_the_mods_nine/mods"

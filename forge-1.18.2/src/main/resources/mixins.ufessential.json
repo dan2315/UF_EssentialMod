@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dod.dodForge.ufessential.mixins",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "mixins.ufessential.refmap.json",
+  "mixins": [
+    "ServerLoginPacketListenerImplMixin"
+  ],
+  "client": [
+    "ClientHandshakePacketListenerImplMixin"
+  ],
+  "verbose": true,
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

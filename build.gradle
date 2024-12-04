@@ -1,0 +1,21 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        maven { url 'https://maven.minecraftforge.net/' }
+        maven { url 'https://files.minecraftforge.net/maven/' }
+
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    version = mod_version
+    group = mod_group_id
+    java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+}

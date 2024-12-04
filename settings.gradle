@@ -1,0 +1,19 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven {
+            name = 'MinecraftForge'
+            url = 'https://maven.minecraftforge.net/'
+        }
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.7.0'
+}
+
+rootProject.name = 'UnrealFrontiersEssentialMod'
+
+include 'common' ,'forge-1.18.2', 'forge-1.20.1'
+project(':forge-1.18.2').projectDir = file('forge-1.18.2')
+project(':forge-1.20.1').projectDir = file('forge-1.20.1')

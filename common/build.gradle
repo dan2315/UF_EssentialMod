@@ -1,0 +1,23 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.8.8'
+    annotationProcessor 'com.google.code.gson:gson:2.8.8'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+}
