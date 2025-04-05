@@ -45,13 +45,13 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
     @Override
     public void handleTokens(ServerboundTokensPacket packet) {
         try {
-           if (!AuthService.isAuthenticated(packet.getAccessToken(), packet.getRefreshToken()) && server.isDedicatedServer()) {
-               disconnect(new TextComponent("Не удалось подтвердить аккаунт UnrealFrontiers. Перезайдите ещё раз через лаунчер"));
-           }
-           else {
-               setState("NEGOTIATING");
-               UFEssential.LOGGER.warn("[UF] Successfully authorized");
-           }
+        //    if (!AuthService.isAuthenticated(packet.getAccessToken(), packet.getRefreshToken()) && server.isDedicatedServer()) {
+        //        disconnect(new TextComponent("Не удалось подтвердить аккаунт UnrealFrontiers. Перезайдите ещё раз через лаунчер"));
+        //    }
+        //    else {
+        //        setState("NEGOTIATING");
+        //        UFEssential.LOGGER.warn("[UF] Successfully authorized");
+        //    }
         } catch (Exception e) {
             disconnect(new TextComponent("А вы знали, что Unhahdled Exception это когда хуй знает, что произошло. Так вот, UNHADLED_EXCEPTION"));
         }
