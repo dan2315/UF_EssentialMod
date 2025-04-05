@@ -6,6 +6,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 public class NetworkHandler {
     private static final String PROTOCOL_VERSION = "1";
+
     public static final SimpleChannel MAIN = NetworkRegistry.newSimpleChannel(
             new ResourceLocation("ufessential", "main"),
             () -> PROTOCOL_VERSION,
@@ -14,6 +15,5 @@ public class NetworkHandler {
     );
 
     public static void register() {
-        int id = 0;
     }
 }

@@ -13,6 +13,7 @@ public class ClientboundReadyToAuthPacket implements Packet<ClientLoginPacketLis
     }
 
     public ClientboundReadyToAuthPacket(FriendlyByteBuf friendlyByteBuf) {
+
     }
 
     @Override

@@ -8,6 +8,7 @@ import dod.dodForge.ufessential.mixininterfaces.ServerLoginPacketListenerMixin;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.login.ServerboundHelloPacket;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerLoginPacketListenerImpl;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,24 +27,28 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
 
     @Shadow @Final private Connection connection;
 
+    @Shadow @Final private MinecraftServer server;
+
     @Inject(method = "handleHello", at = @At(value = "TAIL"))
     private void afterHandleHello(ServerboundHelloPacket packet, CallbackInfo ci)
     {
         String state = getState();
-        UFEssential.LOGGER.warn("[UF] Current state is: {}", state);
         if(state.equals("NEGOTIATING"))
         {
             setState("KEY");
             connection.send(new ClientboundReadyToAuthPacket());
-            UFEssential.LOGGER.warn("[UF] Ready to authenticate");
         }
     }
 
     @Override
     public void handleTokens(ServerboundTokensPacket packet) {
+        UFEssential.LOGGER.info("[UF] Trying to process Tokens Packet");
         try {
-            if (!AuthService.isAuthenticated(packet.getAccessToken(), packet.getRefreshToken())) {
-                disconnect(Component.literal("Не удалось подтвердить аккаунт UnrealFrontiers.\nПерезайдите ещё раз через лаунчер."));
+            ServerLoginPacketListenerImpl listener = (ServerLoginPacketListenerImpl) (Object) this;
+            String nickname = listener.gameProfile.getName();
+
+            if (!AuthService.isAuthenticated(packet.getAccessToken(), packet.getRefreshToken(), nickname) && server.isDedicatedServer()) {
+                disconnect(Component.literal("Не удалось подтвердить аккаунт UnrealFrontiers.\nНе закрывая Minecraft, перезапустите лаунчер и попробуйте подключиться ещё раз."));
             }
             else {
                 setState("NEGOTIATING");
@@ -70,7 +75,6 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
     }
 
     public String getState() {
-        UFEssential.LOGGER.info("[UF] Attempting to retrieve 'state' field via reflection...");
 
         try {
             Field stateField = ServerLoginPacketListenerImpl.class.getDeclaredField("f_10019_");

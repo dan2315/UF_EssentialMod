@@ -12,15 +12,24 @@ import java.nio.file.Paths;
 import java.security.SecureRandom;
 
 public class TokenStorage {
-    private static final String APP_DATA_PATH = System.getenv("APPDATA") + File.separator + "UnrealFrontiers";
+    private static final String APP_DATA_PATH = getAppDataPath();
     private static final String TOKEN_FILE_PATH = APP_DATA_PATH + File.separator + "tokens.dat";
     private static final String KEY_FILE_PATH = APP_DATA_PATH + File.separator + "encryption_key.dat";
-    private static final int KEY_SIZE = 16; // 16 bytes for AES-128 encryption
+    private static final int KEY_SIZE = 16;
 
     static {
         File appDataDir = new File(APP_DATA_PATH);
         if (!appDataDir.exists()) {
             appDataDir.mkdirs();
+        }
+    }
+
+    private static String getAppDataPath() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.contains("win")) {
+            return System.getenv("APPDATA") + File.separator + "UnrealFrontiers";
+        } else {
+            return System.getProperty("user.home") + File.separator + ".config" + File.separator + "UnrealFrontiers";
         }
     }
 

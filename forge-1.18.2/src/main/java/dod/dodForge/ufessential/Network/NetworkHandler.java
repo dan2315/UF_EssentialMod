@@ -1,6 +1,5 @@
 package dod.dodForge.ufessential.Network;
 
-import dod.dodForge.ufessential.Network.Packets.TokensPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
@@ -16,6 +15,6 @@ public class NetworkHandler {
 
     public static void register() {
         int id = 0;
-        MAIN.registerMessage(id++, TokensPacket.class, TokensPacket::encode, TokensPacket::decode, TokensPacket::handle);
+//        MAIN.registerMessage(id++, TokensPacket.class, TokensPacket::encode, TokensPacket::decode, TokensPacket::handle);
     }
 }

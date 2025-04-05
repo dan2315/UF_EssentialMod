@@ -9,20 +9,21 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class AuthService {
     private static final String BASE_URL = "https://unrealfrontiers.xyz";
-    private static final String REQUEST_ACCESS_ENDPOINT = "/request_access";
-    private static final String REFRESH_TOKENS_ENDPOINT = "/refresh_tokens";
+    private static final String REQUEST_ACCESS_ENDPOINT = "/auth/verify_nickname";
+    private static final String REFRESH_TOKENS_ENDPOINT = "/auth/refresh_tokens";
 
-    public static boolean isAuthenticated() throws Exception {
+    public static boolean isAuthenticated(String nickname) throws Exception {
         String[] tokens = TokenStorage.loadTokens();
-        return isAuthenticated(tokens[0], tokens[1]);
+        return isAuthenticated(tokens[0], tokens[1], nickname);
     }
 
-    public static boolean isAuthenticated(String accessToken, String refreshToken) throws Exception {
-        if (isAccessTokenValid(accessToken)) {
+    public static boolean isAuthenticated(String accessToken, String refreshToken, String nickname) throws Exception {
+        if (isNicknameValid(accessToken, nickname)) {
             return true;
         } else {
             // Try refreshing the token
@@ -36,22 +37,21 @@ public class AuthService {
         return false;
     }
 
-    public static boolean isAccessTokenValid(String accessToken) {
+    public static boolean isNicknameValid(String accessToken, String nickname) {
         HttpURLConnection connection = null;
         try {
-            URL url = new URL(BASE_URL + REQUEST_ACCESS_ENDPOINT);
+            URL url = new URL(BASE_URL + REQUEST_ACCESS_ENDPOINT + "?nickname=" + URLEncoder.encode(nickname, StandardCharsets.UTF_8));
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setRequestProperty("Authorization", "Bearer " + accessToken);
             connection.setConnectTimeout(10_000);
             connection.setReadTimeout(10_000);
 
-
             int responseCode = connection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 String response = new String(connection.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
                 JsonObject json = JsonParser.parseString(response).getAsJsonObject();
-                return json.has("access") && json.get("access").getAsBoolean();
+                return json.has("valid") && json.get("valid").getAsBoolean();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -64,7 +64,6 @@ public class AuthService {
     }
 
     public static String refreshAccessToken(String refreshToken) {
-//        System.err.println("HELLO BITCHES: " + refreshToken);
         HttpURLConnection connection = null;
         try {
             URL url = new URL(BASE_URL + REFRESH_TOKENS_ENDPOINT);

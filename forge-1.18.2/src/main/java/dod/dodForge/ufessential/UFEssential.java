@@ -2,7 +2,6 @@ package dod.dodForge.ufessential;
 
 import com.mojang.logging.LogUtils;
 import dod.dodForge.ufessential.Network.NetworkHandler;
-import dod.dodForge.ufessential.Network.Packets.TokensPacket;
 import dod.dodForge.ufessential.utils.TokenStorage;
 import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
 import net.minecraftforge.common.MinecraftForge;
@@ -36,8 +35,8 @@ public class UFEssential {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            TokensPacket packet = new TokensPacket(tokens[0], tokens[1]);
-            NetworkHandler.MAIN.sendToServer(packet);
+//            TokensPacket packet = new TokensPacket(tokens[0], tokens[1]);
+//            NetworkHandler.MAIN.sendToServer(packet);
         }
 
     }
