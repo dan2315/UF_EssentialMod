@@ -17,6 +17,9 @@ out
 build
 .gradle
 
+# batch
+asdfBuild.bat
+
 # other
 eclipse
 run
