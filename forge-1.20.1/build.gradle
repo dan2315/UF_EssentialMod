@@ -4,6 +4,12 @@ plugins {
     id 'org.spongepowered.mixin' version '0.7.+'
 }
 
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
+
 dependencies {
     implementation project(':common')
     annotationProcessor 'com.google.code.gson:gson:2.8.8'
