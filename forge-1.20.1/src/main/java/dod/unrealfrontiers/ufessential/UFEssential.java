@@ -3,6 +3,8 @@ package dod.unrealfrontiers.ufessential;
 import com.mojang.logging.LogUtils;
 import dod.unrealfrontiers.ufessential.Network.NetworkHandler;
 import dod.unrealfrontiers.ufessential.Network.RedirectClientHandler;
+import dod.unrealfrontiers.ufessential.blocks.ModBlockEntities;
+import dod.unrealfrontiers.ufessential.blocks.ModBlocks;
 import dod.unrealfrontiers.ufessential.commands.RedirectCommand;
 import dod.unrealfrontiers.ufessential.maintenance.MaintenanceCommands;
 import dod.unrealfrontiers.ufessential.maintenance.MaintenanceEventHandler;
@@ -27,14 +29,18 @@ public class UFEssential {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
         
         MinecraftForge.EVENT_BUS.register(new MaintenanceEventHandler());
+
         if (FMLEnvironment.dist == Dist.CLIENT) {
-            UFEssential.LOGGER.warn("RedirectClientHandler registered");
             MinecraftForge.EVENT_BUS.register(RedirectClientHandler.class);
         }
+        var bus = FMLJavaModLoadingContext.get().getModEventBus();
+
+        ModBlocks.BLOCKS.register(bus);
+        ModBlockEntities.BLOCK_ENTITIES.register(bus);
     }
 
     private void setup(FMLCommonSetupEvent event) {
-//        NetworkHandler.register(); Not neccessary for now
+        NetworkHandler.register();
         LOGGER.info("Common setup event passed");
     }
     

@@ -10,6 +10,7 @@
     "ServerLoginPacketListenerImplMixin"
   ],
   "client": [
+    "ConnectionMixin",
     "ClientHandshakePacketListenerImplMixin",
     "DisconnectedScreenMixin"
   ],
