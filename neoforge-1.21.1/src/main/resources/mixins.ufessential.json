@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dod.unrealfrontiers.ufessential.mixins",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ServerBoundHelloPacketMixin"
+  ],
+  "client": [
+    "ConnectionMixin",
+    "DisconnectedScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

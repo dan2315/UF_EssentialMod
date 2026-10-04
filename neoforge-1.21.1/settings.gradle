@@ -1,0 +1,14 @@
+// Standalone build: the root build uses ForgeGradle for the older modules, this one uses ModDevGradle.
+// Build with: ..\gradlew -p neoforge-1.21.1 build
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url = 'https://maven.neoforged.net/releases' }
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+rootProject.name = 'ufessential-neoforge-1.21.1'
