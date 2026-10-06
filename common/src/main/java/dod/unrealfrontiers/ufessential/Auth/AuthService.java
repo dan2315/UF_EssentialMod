@@ -13,9 +13,23 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class AuthService {
-    public static final String BASE_URL = "https://unrealfrontiers.xyz";
+    public static final String DEFAULT_BASE_URL = "https://unrealfrontiers.xyz";
+    private static volatile String baseUrl = DEFAULT_BASE_URL;
     private static final String REQUEST_ACCESS_ENDPOINT = "/auth/verify_nickname";
     private static final String REFRESH_TOKENS_ENDPOINT = "/auth/refresh_tokens";
+
+    public static String getBaseUrl() {
+        return baseUrl;
+    }
+
+    public static void setBaseUrl(String url) {
+        if (url == null || url.isBlank()) {
+            baseUrl = DEFAULT_BASE_URL;
+            return;
+        }
+        String trimmed = url.trim();
+        baseUrl = trimmed.endsWith("/") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
+    }
 
     public static boolean isAuthenticated(String nickname) throws Exception {
         String[] tokens = TokenStorage.loadTokens();
@@ -40,7 +54,7 @@ public class AuthService {
     public static boolean isNicknameValid(String accessToken, String nickname) {
         HttpURLConnection connection = null;
         try {
-            URL url = new URL(BASE_URL + REQUEST_ACCESS_ENDPOINT + "?nickname=" + URLEncoder.encode(nickname, StandardCharsets.UTF_8));
+            URL url = new URL(getBaseUrl() + REQUEST_ACCESS_ENDPOINT + "?nickname=" + URLEncoder.encode(nickname, StandardCharsets.UTF_8));
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setRequestProperty("Authorization", "Bearer " + accessToken);
@@ -66,7 +80,7 @@ public class AuthService {
     public static String refreshAccessToken(String refreshToken) {
         HttpURLConnection connection = null;
         try {
-            URL url = new URL(BASE_URL + REFRESH_TOKENS_ENDPOINT);
+            URL url = new URL(getBaseUrl() + REFRESH_TOKENS_ENDPOINT);
             System.err.println(url);
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");

@@ -34,7 +34,7 @@ public final class UFHttpClient {
         }
     }
 
-    /** @param path endpoint path relative to the backend base URL, e.g. "/auth/verify_nickname?nickname=x" */
+    /** @param path endpoint path relative to the configured backend base URL, e.g. "/auth/verify_nickname?nickname=x" */
     public static CompletableFuture<Response> get(String path) {
         return send("GET", path, null);
     }
@@ -82,7 +82,7 @@ public final class UFHttpClient {
     }
 
     private static Response execute(String method, String path, String jsonBody, String accessToken) throws Exception {
-        HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(AuthService.BASE_URL + path))
+        HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(AuthService.getBaseUrl() + path))
                 .timeout(Duration.ofSeconds(10))
                 .method(method, jsonBody == null
                         ? HttpRequest.BodyPublishers.noBody()
