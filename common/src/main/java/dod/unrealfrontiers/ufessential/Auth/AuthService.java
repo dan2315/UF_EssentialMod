@@ -13,7 +13,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class AuthService {
-    private static final String BASE_URL = "https://unrealfrontiers.xyz";
+    public static final String BASE_URL = "https://unrealfrontiers.xyz";
     private static final String REQUEST_ACCESS_ENDPOINT = "/auth/verify_nickname";
     private static final String REFRESH_TOKENS_ENDPOINT = "/auth/refresh_tokens";
 
