@@ -22,7 +22,8 @@ import java.util.concurrent.CompletableFuture;
  * Public API for other mods to call Unreal Frontiers backend endpoints.
  * Requests are sent asynchronously with the stored access token; on 401 the token
  * is refreshed once and the request is retried. Without stored tokens requests go out
- * with no Authorization header. 4xx/5xx are normal responses; only network failures
+ * with no Authorization header. Tokens come from the launcher (UF_ACCESS_TOKEN) or, as a fallback, the token file.
+ * 4xx/5xx are normal responses; only network failures
  * complete the future exceptionally. Callbacks run off the game thread.
  *
  * <pre>
@@ -66,10 +67,10 @@ public final class UFHttpClient {
         }
     }
 
-    /** True when stored tokens can be loaded, i.e. the player signed in through the launcher. */
+    /** True when the launcher handed over a token (or a readable token file exists), i.e. the player is signed in. */
     public static boolean isLoggedIn() {
-        String[] tokens = loadTokens();
-        return tokens != null && tokens.length > 0 && !tokens[0].isEmpty();
+        String[] tokens = TokenStorage.loadTokens();
+        return tokens != null;
     }
 
     /** @param path endpoint path relative to the configured backend base URL, e.g. "/auth/verify_nickname?nickname=x" */
@@ -180,10 +181,11 @@ public final class UFHttpClient {
                                                                    HttpResponse.BodyHandler<T> handler) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                String[] tokens = loadTokens();
+                String[] tokens = TokenStorage.loadTokens();
                 String access = tokens == null ? null : tokens[0];
                 HttpResponse<T> response = execute(method, path, body, contentType, timeout, handler, access);
-                if (response.statusCode() == 401 && tokens != null && tokens.length > 1) {
+                // Launcher-provided tokens come without a refresh token: a 401 is then just returned
+                if (response.statusCode() == 401 && tokens != null && !tokens[1].isBlank()) {
                     String refreshed = AuthService.refreshAccessToken(tokens[1]);
                     if (refreshed != null) {
                         TokenStorage.saveTokens(refreshed, tokens[1]);
@@ -197,14 +199,6 @@ public final class UFHttpClient {
                 throw new RuntimeException(e);
             }
         });
-    }
-
-    private static String[] loadTokens() {
-        try {
-            return TokenStorage.loadTokens();
-        } catch (Exception e) {
-            return null; // not logged in: request goes out unauthenticated
-        }
     }
 
     private static <T> HttpResponse<T> execute(String method, String path, byte[] body, String contentType,

@@ -12,6 +12,8 @@ import java.nio.file.Paths;
 import java.security.SecureRandom;
 
 public class TokenStorage {
+    /** Access token handed over by the launcher. */
+    public static final String ENV_ACCESS_TOKEN = "UF_ACCESS_TOKEN";
     private static final String APP_DATA_PATH = getAppDataPath();
     private static final String TOKEN_FILE_PATH = APP_DATA_PATH + File.separator + "tokens.dat";
     private static final String KEY_FILE_PATH = APP_DATA_PATH + File.separator + "encryption_key.dat";
@@ -60,14 +62,32 @@ public class TokenStorage {
         Files.write(Paths.get(TOKEN_FILE_PATH), encryptedTokens);
     }
 
-    public static String[] loadTokens() throws Exception {
-        if (!Files.exists(Paths.get(TOKEN_FILE_PATH))) {
-            throw new FileNotFoundException("Token file not found.");
+    /**
+     * Returns {accessToken, refreshToken}, or null when the player isn't signed in.
+     * The launcher passes the access token in {@link #ENV_ACCESS_TOKEN} (no refresh token, so the second element is "");
+     * the token file is only a fallback for dev runs and older launchers.
+     */
+    public static String[] loadTokens() {
+        String envToken = System.getenv(ENV_ACCESS_TOKEN);
+        if (envToken != null && !envToken.isBlank()) {
+            return new String[]{envToken.trim(), ""};
         }
 
-        byte[] encryptedTokens = Files.readAllBytes(Paths.get(TOKEN_FILE_PATH));
-        String decryptedTokens = decrypt(encryptedTokens);
-        return decryptedTokens.split("\\|");
+        if (!Files.exists(Paths.get(TOKEN_FILE_PATH))) {
+            return null;
+        }
+        try {
+            byte[] encryptedTokens = Files.readAllBytes(Paths.get(TOKEN_FILE_PATH));
+            String[] tokens = decrypt(encryptedTokens).split("\\|");
+            if (tokens[0].isBlank()) {
+                return null;
+            }
+            return tokens.length > 1 ? new String[]{tokens[0], tokens[1]} : new String[]{tokens[0], ""};
+        } catch (Exception e) {
+            // Newer launchers encrypt the file with DPAPI, which Java can't read
+            System.err.println("[UF] Token file could not be read (" + e.getClass().getSimpleName() + "), treating as not signed in");
+            return null;
+        }
     }
 
     public static void deleteTokens() {
@@ -85,14 +105,13 @@ public class TokenStorage {
         cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);
         byte[] iv = cipher.getIV();
 
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-             CipherOutputStream cipherOut = new CipherOutputStream(outputStream, cipher)) {
-
-            outputStream.write(iv); // Write IV to the beginning of the file
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        outputStream.write(iv); // Write IV to the beginning of the file
+        // Closing (not just flushing) the cipher stream writes the final padded block
+        try (CipherOutputStream cipherOut = new CipherOutputStream(outputStream, cipher)) {
             cipherOut.write(plainText.getBytes(StandardCharsets.UTF_8));
-            cipherOut.flush();
-            return outputStream.toByteArray();
         }
+        return outputStream.toByteArray();
     }
 
     private static String decrypt(byte[] cipherText) throws Exception {

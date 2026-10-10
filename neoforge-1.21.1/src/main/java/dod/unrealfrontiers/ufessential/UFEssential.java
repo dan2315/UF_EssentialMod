@@ -29,6 +29,8 @@ public class UFEssential {
 
         modContainer.registerConfig(ModConfig.Type.CLIENT, UFConfig.SPEC);
         modEventBus.addListener(UFConfig::onConfigEvent);
+        modContainer.registerConfig(ModConfig.Type.COMMON, UFServerConfig.SPEC);
+        modEventBus.addListener(UFServerConfig::onConfigEvent);
         LOGGER.warn("[UF] Unreal Frontiers init");
 
         modEventBus.addListener(NetworkHandler::onRegisterPayloads);

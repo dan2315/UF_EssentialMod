@@ -33,20 +33,17 @@ public class NetworkHandler {
         }
     }
 
-    // Client: answer with the tokens the launcher stored
+    // Client: answer with the token the launcher handed over. Launcher tokens carry no refresh token, so that field is "".
     private static void handleReadyToAuth(ClientboundReadyToAuthPayload payload, IPayloadContext context) {
         UFEssential.LOGGER.info("[UF] Server requested authentication");
-        String accessToken = "";
-        String refreshToken = "";
-        try {
-            String[] tokens = TokenStorage.loadTokens();
-            accessToken = tokens[0];
-            refreshToken = tokens.length > 1 ? tokens[1] : "";
-        } catch (Exception e) {
+        String[] tokens = TokenStorage.loadTokens();
+        if (tokens == null) {
             // Send empty tokens; the server rejects them with a readable message instead of a crash
-            UFEssential.LOGGER.error("[UF] Failed to load auth tokens", e);
+            UFEssential.LOGGER.warn("[UF] No auth token: game not started by the launcher, or player not signed in");
+            context.reply(new ServerboundTokensPayload("", ""));
+            return;
         }
-        context.reply(new ServerboundTokensPayload(accessToken, refreshToken));
+        context.reply(new ServerboundTokensPayload(tokens[0], tokens[1]));
     }
 
     // Server: verify the tokens against the backend, then let the player in or disconnect them

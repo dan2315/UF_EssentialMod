@@ -13,8 +13,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class AuthService {
-    public static final String DEFAULT_BASE_URL = "https://unrealfrontiers.xyz";
-    private static volatile String baseUrl = DEFAULT_BASE_URL;
+    public static final String DEFAULT_BASE_URL = "https://unrealfrontiers.com";
+    /** Backend URL handed over by the launcher. */
+    public static final String ENV_BACKEND_URL = "UF_BACKEND_URL";
+    private static volatile String baseUrl = defaultBaseUrl();
     private static final String REQUEST_ACCESS_ENDPOINT = "/auth/verify_nickname";
     private static final String REFRESH_TOKENS_ENDPOINT = "/auth/refresh_tokens";
 
@@ -22,33 +24,58 @@ public class AuthService {
         return baseUrl;
     }
 
+    /** Overrides the backend URL; null or blank falls back to {@link #ENV_BACKEND_URL}, then {@link #DEFAULT_BASE_URL}. */
     public static void setBaseUrl(String url) {
-        if (url == null || url.isBlank()) {
-            baseUrl = DEFAULT_BASE_URL;
-            return;
-        }
-        String trimmed = url.trim();
-        baseUrl = trimmed.endsWith("/") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
+        baseUrl = url == null || url.isBlank() ? defaultBaseUrl() : normalize(url);
     }
 
+    private static String defaultBaseUrl() {
+        String env = System.getenv(ENV_BACKEND_URL);
+        return env == null || env.isBlank() ? DEFAULT_BASE_URL : normalize(env);
+    }
+
+    private static String normalize(String url) {
+        String trimmed = url.trim();
+        return trimmed.endsWith("/") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
+    }
+
+    /** Checks this machine's tokens, saving a refreshed access token when they came from the token file. */
     public static boolean isAuthenticated(String nickname) throws Exception {
         String[] tokens = TokenStorage.loadTokens();
-        return isAuthenticated(tokens[0], tokens[1], nickname);
-    }
-
-    public static boolean isAuthenticated(String accessToken, String refreshToken, String nickname) throws Exception {
-        if (isNicknameValid(accessToken, nickname)) {
+        if (tokens == null) {
+            return false;
+        }
+        if (isNicknameValid(tokens[0], nickname)) {
             return true;
-        } else {
-            // Try refreshing the token
-            String newAccessToken = refreshAccessToken(refreshToken);
-            if (newAccessToken != null) {
-                // Save the updated access token
-                TokenStorage.saveTokens(newAccessToken, refreshToken);
-                return true;
-            }
+        }
+        if (tokens[1].isBlank()) {
+            return false;
+        }
+        String newAccessToken = refreshAccessToken(tokens[1]);
+        if (newAccessToken != null && isNicknameValid(newAccessToken, nickname)) {
+            TokenStorage.saveTokens(newAccessToken, tokens[1]);
+            return true;
         }
         return false;
+    }
+
+    /**
+     * Checks tokens a player sent (server side). A refreshed token is only used for the check, never stored, and
+     * must belong to the same nickname: a successful refresh alone doesn't prove who the player is.
+     * Players started by a current launcher send no refresh token, so there's nothing to retry with.
+     */
+    public static boolean isAuthenticated(String accessToken, String refreshToken, String nickname) throws Exception {
+        if (accessToken == null || accessToken.isBlank()) {
+            return false;
+        }
+        if (isNicknameValid(accessToken, nickname)) {
+            return true;
+        }
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return false;
+        }
+        String newAccessToken = refreshAccessToken(refreshToken);
+        return newAccessToken != null && isNicknameValid(newAccessToken, nickname);
     }
 
     public static boolean isNicknameValid(String accessToken, String nickname) {
@@ -101,6 +128,10 @@ public class AuthService {
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 String response = new String(connection.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
                 JsonObject json = JsonParser.parseString(response).getAsJsonObject();
+                // The backend answers {"token", "refreshToken"}; "accessToken" is the older name
+                if (json.has("token")) {
+                    return json.get("token").getAsString();
+                }
                 if (json.has("accessToken")) {
                     return json.get("accessToken").getAsString();
                 }

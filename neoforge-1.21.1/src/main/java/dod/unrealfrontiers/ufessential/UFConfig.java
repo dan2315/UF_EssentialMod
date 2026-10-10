@@ -8,8 +8,8 @@ public class UFConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
     public static final ModConfigSpec.ConfigValue<String> BASE_URL = BUILDER
-            .comment("Base URL of the Unreal Frontiers backend, without a trailing slash")
-            .define("baseUrl", AuthService.DEFAULT_BASE_URL, v -> v instanceof String s && s.startsWith("http"));
+            .comment("Overrides the Unreal Frontiers backend URL. Leave empty to use the one the launcher passes (UF_BACKEND_URL), or the default.")
+            .define("backendUrlOverride", "", v -> v instanceof String s && (s.isBlank() || s.startsWith("http")));
 
     public static final ModConfigSpec SPEC = BUILDER.build();
 
