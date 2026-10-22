@@ -5,6 +5,8 @@ import dod.unrealfrontiers.ufessential.Network.Connection.AuthConfigurationTask;
 import dod.unrealfrontiers.ufessential.Network.Connection.ClientboundReadyToAuthPayload;
 import dod.unrealfrontiers.ufessential.Network.Connection.ServerboundTokensPayload;
 import dod.unrealfrontiers.ufessential.UFEssential;
+import dod.unrealfrontiers.ufessential.skins.SkinConfigurationTask;
+import dod.unrealfrontiers.ufessential.skins.SkinManager;
 import dod.unrealfrontiers.ufessential.utils.TokenStorage;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.network.ServerCommonPacketListenerImpl;
@@ -30,6 +32,10 @@ public class NetworkHandler {
         // Same as before: singleplayer and LAN skip the account check
         if (server != null && server.isDedicatedServer()) {
             event.register(new AuthConfigurationTask());
+        }
+        // After the account check, so only verified players wait for their skin
+        if (SkinManager.isActive()) {
+            event.register(new SkinConfigurationTask(event.getListener()));
         }
     }
 

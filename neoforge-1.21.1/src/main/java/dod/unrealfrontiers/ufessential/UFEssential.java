@@ -8,6 +8,8 @@ import dod.unrealfrontiers.ufessential.blocks.ModBlocks;
 import dod.unrealfrontiers.ufessential.commands.RedirectCommand;
 import dod.unrealfrontiers.ufessential.maintenance.MaintenanceCommands;
 import dod.unrealfrontiers.ufessential.maintenance.MaintenanceEventHandler;
+import dod.unrealfrontiers.ufessential.skins.SkinCommands;
+import dod.unrealfrontiers.ufessential.skins.SkinManager;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -17,6 +19,7 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.slf4j.Logger;
 
 @Mod(UFEssential.MODID)
@@ -37,6 +40,8 @@ public class UFEssential {
         modEventBus.addListener(NetworkHandler::onRegisterConfigurationTasks);
 
         NeoForge.EVENT_BUS.register(new MaintenanceEventHandler());
+        NeoForge.EVENT_BUS.addListener(SkinManager::onServerTick);
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> SkinManager.onPlayerLeft(e.getEntity().getUUID()));
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
             NeoForge.EVENT_BUS.register(RedirectClientHandler.class);
@@ -51,5 +56,6 @@ public class UFEssential {
         LOGGER.info("Registering commands");
         MaintenanceCommands.register(event.getDispatcher());
         RedirectCommand.register(event.getDispatcher());
+        SkinCommands.register(event.getDispatcher());
     }
 }
