@@ -1,6 +1,7 @@
 package dod.unrealfrontiers.ufessential.maintenance;
 
 import dod.unrealfrontiers.ufessential.UFEssential;
+import dod.unrealfrontiers.ufessential.UFServerConfig;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -21,6 +22,8 @@ public class MaintenanceManager extends SavedData {
     private final List<String> allowedPlayers = new ArrayList<>();
     
     private static MaintenanceManager INSTANCE = null;
+    /** The MOTD from server.properties while the maintenance one is shown. */
+    private static String normalMotd = null;
 
     public MaintenanceManager() {
     }
@@ -123,6 +126,24 @@ public class MaintenanceManager extends SavedData {
             }
         }
         return kicked;
+    }
+
+    /**
+     * Shows the maintenance MOTD in the server list while maintenance is on and puts the normal one back when it's off.
+     * Only changes the running server; server.properties stays as it is.
+     */
+    public void applyMotd(MinecraftServer server) {
+        String maintenanceMotd = UFServerConfig.MAINTENANCE_MOTD.get();
+        if (maintenanceMode && !maintenanceMotd.isEmpty()) {
+            if (normalMotd == null) {
+                normalMotd = server.getMotd();
+            }
+            server.setMotd(maintenanceMotd);
+        } else if (normalMotd != null) {
+            server.setMotd(normalMotd);
+            normalMotd = null;
+        }
+        server.invalidateStatus();
     }
 
     public Component getMaintenanceMessage() {

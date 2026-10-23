@@ -66,6 +66,7 @@ public class MaintenanceCommands {
         }
 
         maintenanceManager.setMaintenanceMode(enabled);
+        maintenanceManager.applyMotd(server);
         if (enabled) {
             int kicked = maintenanceManager.kickDisallowedPlayers(server);
             source.sendSuccess(() -> Component.literal("Maintenance mode enabled. Disconnected " + kicked + " player(s)."), true);

@@ -48,6 +48,13 @@ public class UFServerConfig {
         BUILDER.pop();
     }
 
+    public static final ModConfigSpec.ConfigValue<String> MAINTENANCE_MOTD = BUILDER
+            .comment("Server list text (MOTD) while maintenance mode is on, replacing the one from server.properties.",
+                    "§ colour codes; \\n starts the second line. Empty = keep the normal MOTD.")
+            .define("maintenanceMotd",
+                    "§e§l//§8§l//§e§l//§8§l//§e§l//§8§l// §6§lТЕХНИЧЕСКИЕ РАБОТЫ §8§l//§e§l//§8§l//§e§l//§8§l//§e§l//"
+                            + "\n§7Ведутся технические работы, зайдите позже");
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static void onConfigEvent(ModConfigEvent event) {
