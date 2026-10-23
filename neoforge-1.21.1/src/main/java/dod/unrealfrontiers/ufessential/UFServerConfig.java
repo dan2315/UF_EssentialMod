@@ -52,8 +52,9 @@ public class UFServerConfig {
             .comment("Server list text (MOTD) while maintenance mode is on, replacing the one from server.properties.",
                     "§ colour codes; \\n starts the second line. Empty = keep the normal MOTD.")
             .define("maintenanceMotd",
-                    "§e§l//§8§l//§e§l//§8§l//§e§l//§8§l// §6§lТЕХНИЧЕСКИЕ РАБОТЫ §8§l//§e§l//§8§l//§e§l//§8§l//§e§l//"
-                            + "\n§7Ведутся технические работы, зайдите позже");
+                    // A server-list line fits 271 px; a bold "/" is 7 px, the bold title about 127 px
+                    "§e§l//§8§l//§e§l//§8§l// §6§lТЕХНИЧЕСКИЕ РАБОТЫ §8§l//§e§l//§8§l//§e§l//"
+                            + "\n" + "§e§l//§8§l//".repeat(9) + "§e§l//");
 
     public static final ModConfigSpec SPEC = BUILDER.build();
 
