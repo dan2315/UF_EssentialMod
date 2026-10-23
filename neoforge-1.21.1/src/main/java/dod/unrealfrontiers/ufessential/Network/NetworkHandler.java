@@ -5,6 +5,8 @@ import dod.unrealfrontiers.ufessential.Network.Connection.AuthConfigurationTask;
 import dod.unrealfrontiers.ufessential.Network.Connection.ClientboundReadyToAuthPayload;
 import dod.unrealfrontiers.ufessential.Network.Connection.ServerboundTokensPayload;
 import dod.unrealfrontiers.ufessential.UFEssential;
+import dod.unrealfrontiers.ufessential.maintenance.MaintenanceCheckTask;
+import dod.unrealfrontiers.ufessential.maintenance.MaintenanceManager;
 import dod.unrealfrontiers.ufessential.skins.SkinConfigurationTask;
 import dod.unrealfrontiers.ufessential.skins.SkinManager;
 import dod.unrealfrontiers.ufessential.utils.TokenStorage;
@@ -29,6 +31,10 @@ public class NetworkHandler {
 
     public static void onRegisterConfigurationTasks(RegisterConfigurationTasksEvent event) {
         var server = ServerLifecycleHooks.getCurrentServer();
+        // First, so nobody waits through the account and skin checks only to be turned away
+        if (server != null && MaintenanceManager.get(server).isMaintenanceModeEnabled()) {
+            event.register(new MaintenanceCheckTask(event.getListener()));
+        }
         // Same as before: singleplayer and LAN skip the account check
         if (server != null && server.isDedicatedServer()) {
             event.register(new AuthConfigurationTask());

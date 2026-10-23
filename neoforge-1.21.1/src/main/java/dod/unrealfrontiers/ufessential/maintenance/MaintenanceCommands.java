@@ -3,30 +3,36 @@ package dod.unrealfrontiers.ufessential.maintenance;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import dod.unrealfrontiers.ufessential.UFEssential;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
 
 public class MaintenanceCommands {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // Create the main command: /maintenance
         LiteralArgumentBuilder<CommandSourceStack> maintenanceCommand = Commands.literal("maintenance")
             .requires(source -> source.hasPermission(2)) // Requires permission level 2 (ops)
-            
-            // Toggle command: /maintenance toggle
+
+            // /maintenance and /maintenance status: show whether it's on
+            .executes(context -> showStatus(context.getSource()))
+            .then(Commands.literal("status")
+                .executes(context -> showStatus(context.getSource())))
+
+            .then(Commands.literal("on")
+                .executes(context -> setMaintenanceMode(context.getSource(), true)))
+            .then(Commands.literal("off")
+                .executes(context -> setMaintenanceMode(context.getSource(), false)))
             .then(Commands.literal("toggle")
-                .executes(context -> toggleMaintenanceMode(context.getSource())))
-            
+                .executes(context -> setMaintenanceMode(context.getSource(),
+                        !MaintenanceManager.get(context.getSource().getServer()).isMaintenanceModeEnabled())))
+
             // List commands: /maintenance list
             .then(Commands.literal("list")
                 .executes(context -> listAllowedPlayers(context.getSource()))
-                
+
             // Add player: /maintenance list add <player>
             .then(Commands.literal("add")
                 .then(Commands.argument("player", StringArgumentType.word())
@@ -41,27 +47,31 @@ public class MaintenanceCommands {
         dispatcher.register(maintenanceCommand);
     }
 
-    private static int toggleMaintenanceMode(CommandSourceStack source) {
+    private static int showStatus(CommandSourceStack source) {
+        MaintenanceManager maintenanceManager = MaintenanceManager.get(source.getServer());
+        boolean enabled = maintenanceManager.isMaintenanceModeEnabled();
+        int allowed = maintenanceManager.getAllowedPlayers().size();
+        source.sendSuccess(() -> Component.literal("Maintenance mode is " + (enabled ? "ON" : "OFF")
+                + ". Allowed besides ops: " + allowed + " player(s), see /maintenance list."), false);
+        return enabled ? 1 : 0;
+    }
+
+    private static int setMaintenanceMode(CommandSourceStack source, boolean enabled) {
         MinecraftServer server = source.getServer();
         MaintenanceManager maintenanceManager = MaintenanceManager.get(server);
-        
-        boolean newState = maintenanceManager.toggleMaintenanceMode();
-        
-        if (newState) {
-            source.sendSuccess(() -> Component.literal("Maintenance mode enabled."), true);
-            
-            // Kick non-op, non-whitelisted players
-            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                if (!server.getPlayerList().isOp(player.getGameProfile()) && 
-                    !maintenanceManager.isPlayerAllowed(player.getName().getString())) {
-                    player.connection.disconnect(maintenanceManager.getMaintenanceMessage());
-                    UFEssential.LOGGER.info("Player {} was disconnected due to maintenance mode being enabled", player.getName().getString());
-                }
-            }
+
+        if (maintenanceManager.isMaintenanceModeEnabled() == enabled) {
+            source.sendFailure(Component.literal("Maintenance mode is already " + (enabled ? "on" : "off") + "."));
+            return 0;
+        }
+
+        maintenanceManager.setMaintenanceMode(enabled);
+        if (enabled) {
+            int kicked = maintenanceManager.kickDisallowedPlayers(server);
+            source.sendSuccess(() -> Component.literal("Maintenance mode enabled. Disconnected " + kicked + " player(s)."), true);
         } else {
             source.sendSuccess(() -> Component.literal("Maintenance mode disabled."), true);
         }
-        
         return 1;
     }
 
