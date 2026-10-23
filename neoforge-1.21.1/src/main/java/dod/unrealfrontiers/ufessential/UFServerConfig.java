@@ -54,8 +54,10 @@ public class UFServerConfig {
             .define("maintenanceMotd",
                     // A server-list line fits 271 px; a bold "/" is 7 px, the bold title about 127 px
                     "§e§l//§8§l//§e§l//§8§l// §6§lТЕХНИЧЕСКИЕ РАБОТЫ §8§l//§e§l//§8§l//§e§l//"
-                            // Second line: the title swapped for 18 slashes (126 px), so all three blocks line up
-                            + "\n§e§l//§8§l//§e§l//§8§l// " + "§e§l//§8§l//".repeat(4) + "§e§l// §8§l//§e§l//§8§l//§e§l//");
+                            // Second line: the title swapped for 18 slashes (126 px), so all three blocks line up;
+                            // its colours run one slash ahead of the first line's
+                            + "\n§e§l/§8§l//§e§l//§8§l//§e§l/ §e§l/§8§l//§e§l//§8§l//§e§l//§8§l//§e§l//§8§l//§e§l//§8§l/"
+                            + " §8§l/§e§l//§8§l//§e§l//§8§l/");
 
     public static final ModConfigSpec SPEC = BUILDER.build();
 
