@@ -5,6 +5,8 @@ import dod.unrealfrontiers.ufessential.Network.NetworkHandler;
 import dod.unrealfrontiers.ufessential.Network.RedirectClientHandler;
 import dod.unrealfrontiers.ufessential.blocks.ModBlockEntities;
 import dod.unrealfrontiers.ufessential.blocks.ModBlocks;
+import dod.unrealfrontiers.ufessential.client.GliderPerspectiveDefault;
+import dod.unrealfrontiers.ufessential.client.XaeroUpdatePopupBlocker;
 import dod.unrealfrontiers.ufessential.commands.RedirectCommand;
 import dod.unrealfrontiers.ufessential.maintenance.MaintenanceCommands;
 import dod.unrealfrontiers.ufessential.maintenance.MaintenanceEventHandler;
@@ -45,6 +47,8 @@ public class UFEssential {
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
             NeoForge.EVENT_BUS.register(RedirectClientHandler.class);
+            NeoForge.EVENT_BUS.register(XaeroUpdatePopupBlocker.class);
+            modEventBus.addListener(GliderPerspectiveDefault::onClientSetup);
         }
 
         ModBlocks.BLOCKS.register(modEventBus);
