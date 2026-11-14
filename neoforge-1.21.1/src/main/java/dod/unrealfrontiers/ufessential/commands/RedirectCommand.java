@@ -5,7 +5,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dod.unrealfrontiers.ufessential.Network.RedirectMethod;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import dod.unrealfrontiers.ufessential.Network.ServerTransfer;
 import dod.unrealfrontiers.ufessential.blocks.ConfigurableTeleportBlock.ConfigurableTeleportBlockEntity;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -19,21 +20,42 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.Collection;
 
+/**
+ * {@code /redirect to <server>} and {@code /redirect <players> to <server>}: sends players to another server of the
+ * network ({@link ServerTransfer}). {@code /setportal <pos> <cmd>} configures the portal blocks around a position.
+ */
 public class RedirectCommand {
+    private static final SuggestionProvider<CommandSourceStack> SERVERS =
+            (ctx, builder) -> ServerTransfer.suggestServers(builder);
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
                 Commands.literal("redirect")
-                        .requires(source -> source.hasPermission(2)) // requires OP, optional
-                        // case 1: self redirect
+                        .requires(source -> source.hasPermission(2))
                         .then(Commands.literal("to")
-                                .then(Commands.argument("serverId", StringArgumentType.string())
-                                        .executes(ctx -> redirectSelf(ctx))))
-                        // case 2: redirect other players
+                                .then(Commands.argument("serverId", StringArgumentType.word())
+                                        .suggests(SERVERS)
+                                        .executes(RedirectCommand::redirectSelf)))
                         .then(Commands.argument("targets", GameProfileArgument.gameProfile())
                                 .then(Commands.literal("to")
-                                        .then(Commands.argument("serverId", StringArgumentType.string())
-                                                .executes(ctx -> redirectOthers(ctx)))))
+                                        .then(Commands.argument("serverId", StringArgumentType.word())
+                                                .suggests(SERVERS)
+                                                .executes(RedirectCommand::redirectOthers))))
         );
+
+        // A rift: /setrift <pos> <x|z> <cmd> [width height]; pos is its bottom centre, x|z the axis it lies along
+        dispatcher.register(Commands.literal("setrift")
+                .requires(source -> source.hasPermission(2))
+                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                        .then(Commands.argument("axis", StringArgumentType.word())
+                                .suggests((ctx, builder) -> builder.suggest("x").suggest("z").buildFuture())
+                                .then(Commands.argument("cmd", StringArgumentType.string())
+                                        .executes(ctx -> placeRift(ctx, 3, 5))
+                                        .then(Commands.argument("width", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 9))
+                                                .then(Commands.argument("height", com.mojang.brigadier.arguments.IntegerArgumentType.integer(2, 12))
+                                                        .executes(ctx -> placeRift(ctx,
+                                                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "width"),
+                                                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "height")))))))));
 
         dispatcher.register(Commands.literal("setportal")
                 .requires(source -> source.hasPermission(2))
@@ -70,13 +92,29 @@ public class RedirectCommand {
                                 }))));
     }
 
+    private static int placeRift(CommandContext<CommandSourceStack> ctx, int width, int height) throws CommandSyntaxException {
+        BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
+        String axis = StringArgumentType.getString(ctx, "axis");
+        String cmd = StringArgumentType.getString(ctx, "cmd");
+        if (!axis.equals("x") && !axis.equals("z")) {
+            ctx.getSource().sendFailure(Component.literal("Ось: x или z (вдоль какой оси лежит разлом)"));
+            return 0;
+        }
+        ServerLevel level = ctx.getSource().getLevel();
+        level.setBlock(pos, dod.unrealfrontiers.ufessential.blocks.ModBlocks.RIFT.get().defaultBlockState()
+                .setValue(dod.unrealfrontiers.ufessential.blocks.Rift.RiftBlock.AXIS,
+                        axis.equals("x") ? net.minecraft.core.Direction.Axis.X : net.minecraft.core.Direction.Axis.Z), 3);
+        if (level.getBlockEntity(pos) instanceof dod.unrealfrontiers.ufessential.blocks.Rift.RiftBlockEntity rift) {
+            rift.configure(cmd, width, height);
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal("Разлом " + width + "x" + height + " на " + pos.toShortString() + ": " + cmd), true);
+        return 1;
+    }
+
     private static int redirectSelf(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         ServerPlayer player = ctx.getSource().getPlayerOrException();
         String serverId = StringArgumentType.getString(ctx, "serverId");
-
-        RedirectMethod.ForwardPlayerToServer(player, serverId);
-        ctx.getSource().sendSuccess(() ->
-                Component.literal("Redirected yourself to " + serverId), true);
+        ServerTransfer.send(player, serverId, failure -> ctx.getSource().sendFailure(failure));
         return 1;
     }
 
@@ -84,14 +122,19 @@ public class RedirectCommand {
         Collection<GameProfile> profiles = GameProfileArgument.getGameProfiles(ctx, "targets");
         String serverId = StringArgumentType.getString(ctx, "serverId");
 
+        int sent = 0;
         for (GameProfile profile : profiles) {
             ServerPlayer player = ctx.getSource().getServer().getPlayerList().getPlayer(profile.getId());
-            if (player != null) {
-                RedirectMethod.ForwardPlayerToServer(player, serverId);
-            } else {
-                ctx.getSource().sendFailure(Component.literal("Player " + profile.getName() + " is not online."));
+            if (player == null) {
+                ctx.getSource().sendFailure(Component.literal(profile.getName() + " не в игре"));
+                continue;
             }
+            String name = profile.getName();
+            ServerTransfer.send(player, serverId, failure -> ctx.getSource().sendFailure(Component.literal(name + ": ").append(failure)));
+            sent++;
         }
-        return profiles.size();
+        int finalSent = sent;
+        if (sent > 0) ctx.getSource().sendSuccess(() -> Component.literal("Переносим на " + serverId + ": " + finalSent), true);
+        return sent;
     }
 }

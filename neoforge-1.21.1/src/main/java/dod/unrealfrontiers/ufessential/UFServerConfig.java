@@ -46,6 +46,27 @@ public class UFServerConfig {
 
     static {
         BUILDER.pop();
+        BUILDER.comment("The network of servers behind the front server (dedicated server only)").push("network");
+    }
+
+    public static final ModConfigSpec.ConfigValue<String> NETWORK_SERVER_ID = BUILDER
+            .comment("This server's id in the backend's server catalog. Empty: UF_SERVER_ID from the environment; neither: no heartbeats")
+            .define("serverId", "");
+
+    public static final ModConfigSpec.ConfigValue<String> NETWORK_API_KEY = BUILDER
+            .comment("Backend API key for the heartbeats (x-api-key). Empty: UF_API_KEY from the environment, then skins.apiKey")
+            .define("apiKey", "");
+
+    public static final ModConfigSpec.BooleanValue NETWORK_REQUIRE_PASS = BUILDER
+            .comment("Let players in only with an entry pass from the backend (sent here by the front server or another server of the network); operators always get in")
+            .define("requirePass", false);
+
+    public static final ModConfigSpec.ConfigValue<String> NETWORK_ENTRY_ADDRESS = BUILDER
+            .comment("The network's address (the front server) told to players turned away for coming in directly, e.g. unrealfrontiers.com:25580")
+            .define("entryAddress", "");
+
+    static {
+        BUILDER.pop();
     }
 
     public static final ModConfigSpec.ConfigValue<String> MAINTENANCE_MOTD = BUILDER

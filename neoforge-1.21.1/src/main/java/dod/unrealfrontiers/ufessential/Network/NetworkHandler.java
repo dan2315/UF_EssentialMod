@@ -35,6 +35,10 @@ public class NetworkHandler {
         if (server != null && MaintenanceManager.get(server).isMaintenanceModeEnabled()) {
             event.register(new MaintenanceCheckTask(event.getListener()));
         }
+        // Servers of a network: only players sent here by the front server or another server of the network
+        if (EntryPassTask.active(server)) {
+            event.register(new EntryPassTask(event.getListener()));
+        }
         // Same as before: singleplayer and LAN skip the account check
         if (server != null && server.isDedicatedServer()) {
             event.register(new AuthConfigurationTask());
@@ -77,7 +81,7 @@ public class NetworkHandler {
             } else if (!authenticated) {
                 context.disconnect(Component.literal("Не удалось подтвердить аккаунт UnrealFrontiers.\nНе закрывая Minecraft, перезапустите лаунчер и попробуйте подключиться ещё раз."));
             } else {
-                UFEssential.LOGGER.warn("[UF] Successfully authorized {}", nickname);
+                UFEssential.LOGGER.info("[UF] Successfully authorized {}", nickname);
                 context.finishCurrentTask(AuthConfigurationTask.TYPE);
             }
         }));

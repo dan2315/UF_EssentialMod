@@ -2,7 +2,6 @@ package dod.unrealfrontiers.ufessential;
 
 import com.mojang.logging.LogUtils;
 import dod.unrealfrontiers.ufessential.Network.NetworkHandler;
-import dod.unrealfrontiers.ufessential.Network.RedirectClientHandler;
 import dod.unrealfrontiers.ufessential.blocks.ModBlockEntities;
 import dod.unrealfrontiers.ufessential.blocks.ModBlocks;
 import dod.unrealfrontiers.ufessential.client.GliderPerspectiveDefault;
@@ -36,19 +35,23 @@ public class UFEssential {
         modEventBus.addListener(UFConfig::onConfigEvent);
         modContainer.registerConfig(ModConfig.Type.COMMON, UFServerConfig.SPEC);
         modEventBus.addListener(UFServerConfig::onConfigEvent);
-        LOGGER.warn("[UF] Unreal Frontiers init");
+        LOGGER.info("[UF] Unreal Frontiers init");
 
         modEventBus.addListener(NetworkHandler::onRegisterPayloads);
         modEventBus.addListener(NetworkHandler::onRegisterConfigurationTasks);
 
         NeoForge.EVENT_BUS.register(new MaintenanceEventHandler());
         NeoForge.EVENT_BUS.addListener(SkinManager::onServerTick);
+        NeoForge.EVENT_BUS.addListener(dod.unrealfrontiers.ufessential.Network.NetworkPresence::onServerTick);
+        NeoForge.EVENT_BUS.addListener(dod.unrealfrontiers.ufessential.Network.NetworkPresence::onServerStopping);
+        NeoForge.EVENT_BUS.addListener(dod.unrealfrontiers.ufessential.Network.NetworkPresence::onPlayerJoined);
+        NeoForge.EVENT_BUS.addListener(dod.unrealfrontiers.ufessential.Network.NetworkPresence::onPlayerLeft);
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> SkinManager.onPlayerLeft(e.getEntity().getUUID()));
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
-            NeoForge.EVENT_BUS.register(RedirectClientHandler.class);
             NeoForge.EVENT_BUS.register(XaeroUpdatePopupBlocker.class);
             modEventBus.addListener(GliderPerspectiveDefault::onClientSetup);
+            modEventBus.addListener(dod.unrealfrontiers.ufessential.client.RiftRenderer::register);
         }
 
         ModBlocks.BLOCKS.register(modEventBus);

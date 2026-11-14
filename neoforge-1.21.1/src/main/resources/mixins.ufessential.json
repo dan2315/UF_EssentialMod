@@ -4,11 +4,9 @@
   "package": "dod.unrealfrontiers.ufessential.mixins",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "ServerBoundHelloPacketMixin"
   ],
   "client": [
-    "ConnectionMixin",
-    "DisconnectedScreenMixin"
+    "ConnectionMixin"
   ],
   "injectors": {
     "defaultRequire": 1

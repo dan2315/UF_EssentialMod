@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "axis=x": { "model": "ufessential:block/rift" },
+    "axis=z": { "model": "ufessential:block/rift" }
+  }
+}

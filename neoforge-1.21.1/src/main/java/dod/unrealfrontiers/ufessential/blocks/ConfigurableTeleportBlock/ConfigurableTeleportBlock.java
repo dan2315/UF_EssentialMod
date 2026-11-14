@@ -1,6 +1,6 @@
 package dod.unrealfrontiers.ufessential.blocks.ConfigurableTeleportBlock;
 
-import dod.unrealfrontiers.ufessential.Network.RedirectMethod;
+import dod.unrealfrontiers.ufessential.Network.ServerTransfer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -39,20 +39,6 @@ public class ConfigurableTeleportBlock extends Block implements EntityBlock {
     }
 
     private void executeCommand(ServerPlayer player, String cmd) {
-        if (cmd == null || cmd.isEmpty()) return;
-
-        if (cmd.startsWith("redirect:")) {
-            String serverId = cmd.substring(9);
-            RedirectMethod.ForwardPlayerToServer(player, serverId);
-
-        } else if (cmd.startsWith("tp:")) {
-            String dimId = cmd.substring(3);
-            ResourceKey<Level> targetDim = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(dimId));
-            ServerLevel targetLevel = player.server.getLevel(targetDim);
-            if (targetLevel != null) {
-                // Lands at the target dimension's world spawn
-                player.changeDimension(new DimensionTransition(targetLevel, player, DimensionTransition.DO_NOTHING));
-            }
-        }
+        dod.unrealfrontiers.ufessential.blocks.PortalActions.run(player, cmd);
     }
 }
